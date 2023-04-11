@@ -7,7 +7,7 @@ metadata:
     deployment: wso2am-pattern-1-am
     product: api-manager
 spec:
-  storageClassName: "azurefile-csi-premium"
+  storageClassName: oci-fss
   accessModes:
     - ReadWriteMany
   resources:
