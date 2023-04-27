@@ -271,3 +271,8 @@ data:
     [transport.https.properties]
     proxyPort = 443
 
+    [transport.passthru_https.sender.parameters]
+    HostnameVerifier = "AllowAll"
+
+    [passthru_http]
+    http.socket.timeout=60000

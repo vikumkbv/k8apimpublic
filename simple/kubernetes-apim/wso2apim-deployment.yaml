@@ -40,10 +40,24 @@ spec:
           volumeMounts:
             - name: mysql-connector-jar
               mountPath: /mysql-connector-jar
+        - name: init-download-tcpdump-java-agent-jar
+          image: busybox:1.31
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              set -e
+              wget https://repo1.maven.org/maven2/name/neykov/extract-tls-secrets/4.0.0/extract-tls-secrets-4.0.0.jar -P /tcpdump-java-agent-jar/
+          volumeMounts:
+            - name: tcpdump-java-agent-jar
+              mountPath: /tcpdump-java-agent-jar
       containers:
         - name: wso2am-pattern-1-am
 #          image: "$image.pull.@.wso2"/wso2am:3.2.0
-          image: janithcmw/wso2apim320:3.2.0
+#          image: janithcmw/wso2apim320:3.2.0
+#          image: janithcmw/wso2apim320:3.2.0-1
+#          image: janithcmw/wso2apim320:3.2.0-los
+          image: vikumkbv/3.2.0.197:latest
           livenessProbe:
             exec:
               command:
@@ -96,13 +110,54 @@ spec:
             - name: wso2am-pattern-1-am-1-conf
               mountPath: /home/wso2carbon/wso2-config-volume/repository/conf/deployment.toml
               subPath: deployment.toml
+            - name: wso2am-pattern-1-am-1-bin
+              mountPath: /home/wso2carbon/wso2-config-volume/bin/wso2server.sh
+              subPath: wso2server.sh
             - name: mysql-connector-jar
               mountPath: /home/wso2carbon/wso2-artifact-volume/repository/components/dropins
+            - name: tcpdump-java-agent-jar
+              mountPath: /home/wso2carbon/wso2-artifact-volume/repository/conf
             - name: wso2am-pattern-1-am-docker-entrypoint
               mountPath: /home/wso2carbon/docker-entrypoint.sh
               subPath: docker-entrypoint.sh
             - name: wsp2apim-log-storage
               mountPath: /home/wso2carbon/wso2am-3.2.0/repository/logs
+              subPath: logs
+              readOnly: false
+        - name: wso2mi
+          #image: virajhasith/wso2mi-4.1.0:latest
+          #image: virajhasith/wso2mi-4.1.0:randomPayload
+          #image: virajhasith/wso2mi:4.2.0.0
+          image: vikumkbv/miwithcertsandapp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8290
+              protocol: "TCP"
+            - containerPort: 8253
+              protocol: "TCP"
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 8290
+            timeoutSeconds: 10
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 8290
+            timeoutSeconds: 30
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: "2"
+              memory: 2Gi
         - name: netshoot
           image: nicolaka/netshoot:latest
           command: [ 'sleep', 'infinity' ]
@@ -126,6 +181,9 @@ spec:
         - name: wso2am-pattern-1-am-1-conf
           configMap:
             name: wso2am-pattern-1-am-1-conf
+        - name: wso2am-pattern-1-am-1-bin
+          configMap:
+            name: wso2am-pattern-1-am-1-bin
         - name: wso2am-pattern-1-am-docker-entrypoint
           configMap:
             name: wso2am-pattern-1-am-docker-entrypoint
@@ -138,4 +196,6 @@ spec:
             claimName: wso2apim-log-storage-claim
         - name: mysql-connector-jar
           emptyDir: {}
+        - name: tcpdump-java-agent-jar
+          emptyDir: { }
 
